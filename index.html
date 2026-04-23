@@ -4,541 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ОЦЕНОЧКА ФИЛЬМОВ</title>
-    <style>
-        body { background: #0a0a0a; color: #e0e0e0; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
-        h1 { text-align: center; color: #f0f0f0; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; font-weight: 300; }
-
-        #auth-screen { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #0a0a0a; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; 
-        }
-        .auth-card { 
-            background: #161616; padding: 40px; border-radius: 20px; border: 1px solid #2a2a2a; 
-            text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 300px;
-        }
-        .auth-card h2 { font-weight: 300; letter-spacing: 4px; color: #fff; margin-bottom: 25px; font-size: 1.2rem; }
-        
-        .logout-btn { 
-            background: transparent; color: #555; border: 1px solid #222; padding: 4px 10px; 
-            border-radius: 6px; cursor: pointer; font-size: 0.65rem; transition: 0.3s; 
-        }
-
-       .nav-tabs { 
-            display: flex; 
-            justify-content: center; /* Центрирует кнопки "Фильмы" и "Статистика" */
-            gap: 15px; 
-            margin-bottom: 30px; 
-        }
-
-        .nav-btn { background: #161616; color: #777; border: 1px solid #2a2a2a; padding: 12px 30px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
-        .nav-btn.active { background: #c0c0c0; color: #000; border-color: #c0c0c0; box-shadow: 0 4px 20px rgba(192, 192, 192, 0.2); }
-
-        .header-controls { max-width: 800px; margin: 0 auto 20px; display: flex; justify-content: space-between; align-items: center; }
-        .current-user-badge { font-size: 0.7rem; color: #c0c0c0; text-transform: uppercase; letter-spacing: 1px; border-left: 2px solid #c0c0c0; padding-left: 10px; }
-
-        input, select, textarea { padding: 12px 16px; background: #111 !important; color: #fff !important; border: 1px solid #333 !important; border-radius: 10px; width: 100%; box-sizing: border-box; outline: none; font-size: 0.9rem; margin-bottom: 10px; }
-
-        /* НОВЫЙ КОНТЕЙНЕР ДЛЯ ФИЛЬТРОВ */
-        .filters-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .filters-container select {
-            flex: 1 1 calc(50% - 5px); /* Занимает 50% ширины минус половина gap */
-            margin-bottom: 0; /* Убираем нижний отступ, так как gap управляет сеткой */
-        }
-
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 15px; 
-            margin-top: 20px; 
-        }
-
-        button {
-            transition: all 0.3s ease; /* Плавное изменение прозрачности и цвета */
-        }
-
-        /* Стиль для ПК и планшетов: когда экран шире 600px */
-        @media (min-width: 600px) {
-            .grid {
-                /* Возвращаем автоматическое заполнение, как было раньше */
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                gap: 25px;
-            }
-        }
-        .card { background: #161616; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; transition: 0.3s ease; position: relative; cursor: pointer; }
-        .card:hover { transform: translateY(-5px); border-color: #c0c0c0; }
-        .card img { width: 100%; aspect-ratio: 2/3; height: auto; object-fit: cover; filter: grayscale(40%); }
-        .card-info { 
-            padding: 15px; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            /* Это заставит контент внутри распределиться по краям */
-            justify-content: space-between; 
-            /* Установим фиксированную высоту для текстовой зоны, 
-            чтобы все карточки были одинаковыми */
-            height: 110px; 
-            box-sizing: border-box;
-        }
-
-        .card {
-            /* ... твои стили ... */
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.3s ease;
-}
-
-        /* Стили для даты */
-        .card-date {
-            font-size: 0.55rem; 
-            color: #333; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
-            margin-top: auto; /* Дополнительная страховка прижима к низу */
-        }
-        .rating-badge {
-            display: inline-flex; /* Чтобы размер зависел от контента */
-            align-items: center;
-            justify-content: center;
-            min-width: 40px;      /* Фиксированная ширина для аккуратности */
-            height: 24px;         /* Фиксированная высота */
-            padding: 2px 8px;
-            border-radius: 6px;   /* Те самые скругления */
-            font-size: 0.85rem;
-            font-weight: 800;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.1); /* Тонкая рамка для структуры */
-        }
-        
-        /* НОВАЯ ПЛАШКА КИНОПОИСКА */
-        .kp-rating-badge { background: #ff6600; color: #fff; padding: 3px 10px; border-radius: 4px; font-weight: 800; margin-left: 8px; }
-
-        /* ИЗМЕНЕНИЯ ДЛЯ АНИМАЦИИ МОДАЛЬНОГО ОКНА */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.85); 
-            overflow-y: auto; 
-            backdrop-filter: blur(5px); /* Эффект размытия фона */
-            transition: opacity 0.3s ease;
-        }
-
-        #status-toggle {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-
-        /* Эффект при нажатии (кнопка чуть уменьшается) */
-        #status-toggle:active {
-            transform: scale(0.95);
-        }
-        
-        .modal-content { 
-            background: #161616; 
-            margin: 2% auto; 
-            padding: 30px; 
-            width: 90%; 
-            max-width: 650px; 
-            border-radius: 20px; 
-            border: 1px solid #333; 
-            position: relative; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            /* Анимация появления */
-            animation: modalScaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        @keyframes modalScaleUp {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-        
-        /* УЛУЧШЕННЫЕ ПОЛЗУНКИ */
-        .score-group { background: #0a0a0a; padding: 15px; border-radius: 10px; border: 1px solid #2a2a2a; margin-bottom: 15px; }
-        .score-group.locked { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
-        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; height: 40px; }
-        input[type="range"]::-webkit-slider-runnable-track { height: 10px; background: #333; border-radius: 5px; }
-        input[type="range"]::-webkit-slider-thumb { 
-            -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; background: #c0c0c0; margin-top: -9px; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .card {
-            position: relative; /* Чтобы плашка прилипла к верху карточки */
-        }
-
-        /* Кастомный стиль для выпадающего списка в модальном окне */
-        #edit-status {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            width: 100%;
-            background-color: #1a1a1a !important;
-            color: #fff !important;
-            border: 1px solid #333 !important;
-            border-radius: 12px !important;
-            padding: 12px 40px 12px 15px !important;
-            font-size: 0.9rem;
-            cursor: pointer;
-            outline: none !important;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 15px center !important;
-            background-size: 14px !important;
-            transition: border-color 0.2s;
-        }
-
-        #edit-status:hover { border-color: #555 !important; }
-
-        #edit-status option { background-color: #1a1a1a !important; color: white !important; padding: 10px; }
-
-        #edit-status:focus { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important; }
-
-        .total-score-big {
-            background: #c0c0c0 !important;
-            color: #0a0a0a !important;
-            border-radius: 20px !important;
-            padding: 20px 0 !important;
-            margin: 20px 0 !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-
-        .total-score-big h2 {
-            font-size: 4rem !important;
-            margin: 0 !important;
-            font-weight: 800 !important;
-            letter-spacing: -2px;
-        }
-
-        .viewed-badge {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(192, 192, 192, 0.2); 
-            backdrop-filter: blur(5px);
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-size: 0.6rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            z-index: 2;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-
-        .viewed-badge::before { content: '✓ '; color: #c0c0c0; }
-
-        .locked-group { 
-            opacity: 0.4; 
-            filter: grayscale(1); 
-            pointer-events: none;
-            cursor: not-allowed;
-        }
-
-        select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-color: #1a1a1a !important;
-            color: white !important;
-            border: 1px solid #333 !important;
-            border-radius: 8px;
-            padding: 8px 35px 8px 10px !important;
-            cursor: pointer;
-            font-size: 0.8rem;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 12px center !important;
-            background-size: 12px !important;
-        }
-
-        /* Контейнер для кастомного селекта */
-        .custom-select-container {
-            position: relative;
-            width: 100%;
-        }
-
-        /* Сама кнопка выбора */
-        .select-trigger {
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .select-trigger:hover { border-color: #555; }
-
-        /* Иконка стрелочки */
-        .select-trigger::after {
-            content: '▼';
-            font-size: 0.6rem;
-            color: #666;
-            transition: transform 0.3s ease;
-        }
-
-        .custom-select-container.open .select-trigger::after {
-            transform: rotate(180deg);
-        }
-
-        /* Выпадающее меню */
-        .select-options {
-            position: absolute;
-            top: calc(100% + 5px);
-            left: 0;
-            width: 100%;
-            background: #161616;
-            border: 1px solid #333;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 100;
-            display: none; /* Скрыто по умолчанию */
-            max-height: 250px;
-            overflow-y: auto;
-            animation: fadeInScale 0.2s ease forwards;
-        }
-
-        /* Опция внутри меню */
-        .option {
-            padding: 10px 15px;
-            color: #ccc;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-        }
-
-        /* Вместо синего выделения — мягкий серый фон и белый текст */
-        .option:hover {
-            background: #252525;
-            color: #fff;
-            padding-left: 20px; /* Эффект смещения при наведении */
-        }
-
-        
-
-        /* Анимация появления */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* Скрываем оригинальные селекты, но оставляем их для логики */
-        .hidden-select { display: none !important; }
-
-        /* Анимация исчезновения */
-        @keyframes modalScaleDown {
-            from {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-            to {
-                opacity: 0;
-                transform: scale(0.9) translateY(20px);
-            }
-        }
-
-        /* Класс, который мы будем вешать при закрытии */
-        .modal-content.closing {
-            animation: modalScaleDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        /* Плавное исчезновение темного фона */
-        .modal.fade-out {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card {
-            opacity: 0; /* Делаем карточку невидимой до старта анимации */
-            animation: fadeInUp 0.5s ease forwards;
-        }
-
-        @media (max-width: 600px) {
-            /* Стили для мобильных устройств теперь управляются .filters-container select */
-        }
-
-        /* Адаптация кнопок навигации для мобильных устройств */
-        @media (max-width: 480px) {
-            .nav-tabs {
-                gap: 8px; /* Уменьшаем расстояние между кнопками */
-                padding: 0 5px;
-            }
-
-            .nav-btn {
-                flex: 1; /* Кнопки делят ширину поровну */
-                padding: 12px 5px !important; /* Минимальные боковые отступы */
-                font-size: 0.7rem !important; /* Уменьшаем шрифт, чтобы влезла "Статистика" */
-                white-space: nowrap; /* Запрещаем перенос текста */
-                text-align: center;
-                letter-spacing: 0; /* Убираем межсимвольный интервал для экономии места */
-            }
-
-            h1 {
-                font-size: 1.4rem !important; /* Немного уменьшаем заголовок на узких экранах */
-            }
-        }
-
-        /* --- СТИЛИ МОБИЛЬНОГО БАРАБАНА --- */
-
-        /* Общая обертка: создает эффект "окна" сейфа */
-        .drum-wrapper {
-            position: relative;
-            height: 250px;
-            overflow: hidden;
-            background: transparent; /* Убрали фон */
-            border: none; /* Убрали рамку */
-            margin: 20px 0;
-        }
-
-        /* Линия-маркер в самом центре */
-        .drum-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 50px; /* Высота одного элемента */
-            transform: translateY(-50%);
-            background: rgba(192, 192, 192, 0.05);
-            border-top: 1px solid rgba(192, 192, 192, 0.2);
-            border-bottom: 1px solid rgba(192, 192, 192, 0.2);
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        /* Затемнение сверху и снизу для эффекта 3D */
-       .drum-overlay {
-            background: linear-gradient(to bottom, 
-                rgba(10,10,10,1) 0%, 
-                rgba(10,10,10,0) 35%, 
-                rgba(10,10,10,0) 65%, 
-                rgba(10,10,10,1) 100%);
-        }
-
-        /* Список названий: именно его мы будем двигать */
-        .drum-list {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); /* Плавное торможение */
-            padding-top: 100px; /* Чтобы первый элемент мог встать точно в центр */
-            will-change: transform;
-        }
-
-        /* Стили для каждого названия фильма */
-        .drum-item {
-            height: 50px;
-            line-height: 50px;
-            font-size: 1rem;
-            color: #555;
-            text-transform: uppercase;
-            font-weight: 700;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-            width: 90%;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Кнопка "Крутить" специально для мобилок */
-        #mobile-spin-button {
-            background: #c0c0c0;
-            color: #000;
-            font-size: 1rem;
-            padding: 18px;
-            box-shadow: 0 10px 20px rgba(192, 192, 192, 0.1);
-        }
-
-        #mobile-spin-button:active {
-            transform: scale(0.98);
-        }
-
-        /* Убираем выбор режима на мобилках */
-        @media (max-width: 600px) {
-            #spin-mode {
-                display: none !important;
-            }
-        }
-
-        @keyframes winner-pulse {
-            0% { transform: scale(1); color: #888; }
-            50% { 
-                transform: scale(1.15); 
-                color: #fff; 
-                text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(192, 192, 192, 0.4); 
-            }
-            100% { transform: scale(1.1); color: #fff; }
-        }
-
-        /* Прячем кнопку и настройку секунд на мобильных устройствах */
-        @media (max-width: 600px) {
-            /* Скрываем блок с выбором секунд и кнопку Готово */
-            #roulette-controls > div, 
-            #start-battle-btn {
-                display: none !important;
-            }
-
-            /* Скрываем нижнюю кнопку и дисплей победителя */
-            #pc-spin-controls {
-                display: none !important;
-            }
-
-            /* Центрируем фильтр времени, раз он остался один */
-            #roulette-controls {
-                justify-content: center;
-            }
-            
-            #time-filter {
-                width: 80% !important;
-                max-width: 300px;
-            }
-        }
-
-        .winner-highlight {
-            animation: winner-pulse 0.8s ease-out forwards;
-            z-index: 10;
-        }
-
-        select option { background: #1a1a1a; color: white; }
-
-        .save-btn { background: #c0c0c0; color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
-        .add-btn { background: transparent; color: #c0c0c0; border: 1px solid #c0c0c0; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; }
-    </style>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -615,7 +81,7 @@
         <h2 style="letter-spacing: 3px; font-size: 0.8rem; color: #555; margin-bottom: 25px; text-transform: uppercase;">ВЫБОР ФИЛЬМА</h2>
         
         <div id="roulette-controls" style="margin-bottom:30px; display:flex; flex-wrap:nowrap; gap:10px; justify-content:center; align-items: stretch;">
-            <select id="time-filter" style="width: auto; margin-bottom: 0;">
+            <select id="time-filter" style="width: auto; margin-bottom: 0;" onchange="if(window.innerWidth <= 600) prepareDrum()">
                 <option value="999">Любое время</option>
                 <option value="90">До 90 мин</option>
                 <option value="120">До 120 мин</option>
@@ -624,7 +90,7 @@
             
             <select id="spin-mode" style="width: auto; margin-bottom: 0;">
                 <option value="elimination">На выбывание</option>
-                <option value="classic">Обычный</option>
+                <option value="classic" selected>Обычный</option>
             </select>
 
             <div style="display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0 12px; height: 38px; box-sizing: border-box;">
@@ -658,55 +124,7 @@
                 filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));">
             </div>
 
-            <div id="winner-overlay" style="
-                display: none; 
-                position: absolute; 
-                top: 0; left: 0; width: 100%; height: 100%; 
-                background: rgba(0, 0, 0, 0.5); 
-                backdrop-filter: blur(8px); 
-                -webkit-backdrop-filter: blur(8px);
-                border-radius: 50%; 
-                z-index: 100; 
-                flex-direction: column; 
-                justify-content: center; align-items: center; 
-                opacity: 0; 
-                pointer-events: none;
-                transition: opacity 0.5s ease;">
-                
-                <span style="color: #aaa; font-size: 0.85rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 15px; font-weight: 500;">
-                    ВЫИГРАЛ ФИЛЬМ:
-                </span>
-                <h2 id="overlay-movie-title" style="
-                    color: #fff; 
-                    font-size: 2.4rem; 
-                    text-align: center; 
-                    padding: 0 50px; 
-                    margin: 0; 
-                    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.2);
-                    font-weight: 800;
-                    text-transform: uppercase;
-                    line-height: 1.2;">
-                    НАЗВАНИЕ
-                </h2>
-                <button onclick="closeWinnerOverlay()" style="
-                    margin-top: 40px; 
-                    background: rgba(255, 255, 255, 0.05); 
-                    border: 1px solid rgba(255, 255, 255, 0.2); 
-                    color: #ccc; 
-                    cursor: pointer; 
-                    padding: 10px 25px; 
-                    border-radius: 25px;
-                    font-size: 0.9rem;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    z-index: 101;
-                    pointer-events: auto;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff'" 
-                onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#ccc'">
-                    ЗАКРЫТЬ
-                </button>
-            </div>
+            
         </div>
 
         <div id="mobile-roulette-container" style="display: none; max-width: 500px; margin: 0 auto; position: relative;">
@@ -718,6 +136,59 @@
             </div>
             <button id="mobile-spin-button" onclick="spinDrum()" class="save-btn" style="margin-top: 20px;">
                 КРУТИТЬ БАРАБАН
+            </button>
+        </div>
+
+        <div id="winner-overlay" style="
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.75); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999; 
+            flex-direction: column; 
+            justify-content: center; align-items: center; 
+            opacity: 0; 
+            pointer-events: none;
+            transition: opacity 0.5s ease;">
+            
+            <span style="color: #c0c0c0; font-size: 0.9rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 15px; font-weight: 500;">
+                ВЫПАЛ ФИЛЬМ:
+            </span>
+            
+            <h2 id="overlay-movie-title" style="
+                color: #fff; 
+                font-size: 2.6rem; 
+                text-align: center; 
+                padding: 0 30px; 
+                margin: 0; 
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 25px rgba(192, 192, 192, 0.5), 0 0 45px rgba(160, 160, 160, 0.3);
+                font-weight: 800;
+                text-transform: uppercase;
+                line-height: 1.2;">
+                НАЗВАНИЕ
+            </h2>
+            
+            <button onclick="closeWinnerOverlay()" style="
+                margin-top: 50px; 
+                background: rgba(192, 192, 192, 0.1); 
+                border: 1px solid rgba(192, 192, 192, 0.4); 
+                color: #fff; 
+                cursor: pointer; 
+                padding: 12px 35px; 
+                border-radius: 30px;
+                font-size: 0.9rem;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                z-index: 101;
+                pointer-events: auto;
+                transition: all 0.3s ease;
+                box-shadow: 0 0 15px rgba(192, 192, 192, 0.1);
+            " onmouseover="this.style.background='rgba(192,192,192,0.3)'; this.style.boxShadow='0 0 20px rgba(192, 192, 192, 0.4)'" 
+            onmouseout="this.style.background='rgba(192,192,192,0.1)'; this.style.boxShadow='0 0 15px rgba(192, 192, 192, 0.1)'">
+                ЗАКРЫТЬ
             </button>
         </div>
 
